@@ -157,6 +157,9 @@ class JSNativeContextSpecialization final : public AdvancedReducer {
                       Handle<SharedFunctionInfo> shared_info,
                       Handle<FunctionTemplateInfo> function_template_info);
 
+  // Insert nodes to mask array access index
+  Node* insertIndexMask(Node* index, Node *length);
+  
   // Construct the appropriate subgraph for element access.
   ValueEffectControl BuildElementAccess(
       Node* receiver, Node* index, Node* value, Node* effect, Node* control,

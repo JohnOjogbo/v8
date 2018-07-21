@@ -2197,6 +2197,16 @@ ExternalArrayType GetArrayTypeFromElementsKind(ElementsKind kind) {
 
 }  // namespace
 
+Node* JSNativeContextSpecialization::insertIndexMask(Node *index, Node *length)
+{
+  Node *subtract = graph()->NewNode(simplified()->NumberSubtract(), 
+                            graph()->NewNode(simplified()->NumberToInt32(), index), 
+                            graph()->NewNode(simplified()->NumberToInt32(), length));
+  Node *shift = graph()->NewNode(simplified()->NumberShiftRight(), subtract, 
+                    graph()->NewNode(common()->NumberConstant(31)));
+  return graph()->NewNode(simplified()->NumberBitwiseAnd(), shift, index);
+}
+
 JSNativeContextSpecialization::ValueEffectControl
 JSNativeContextSpecialization::BuildElementAccess(
     Node* receiver, Node* index, Node* value, Node* effect, Node* control,
@@ -2302,6 +2312,8 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
+      // Mask index to prevent access on speculation
+      index = insertIndexMask(index, length);
     }
 
     // Access the actual element.
@@ -2322,6 +2334,8 @@ JSNativeContextSpecialization::BuildElementAccess(
           Node* etrue = effect;
           Node* vtrue;
           {
+            // Mask index to prevent access on speculation
+            index = insertIndexMask(index, length);
             // Perform the actual load
             vtrue = etrue = graph()->NewNode(
                 simplified()->LoadTypedElement(external_array_type), buffer,
@@ -2453,6 +2467,8 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
+      // Mask index to prevent access on speculation
+      index = insertIndexMask(index, length);
     }
 
     // Compute the element access.
@@ -2497,6 +2513,8 @@ JSNativeContextSpecialization::BuildElementAccess(
         Node* etrue = effect;
         Node* vtrue;
         {
+          // Mask index to prevent access on speculation
+          index = insertIndexMask(index, length);
           // Perform the actual load
           vtrue = etrue =
               graph()->NewNode(simplified()->LoadElement(element_access),
@@ -2694,13 +2712,18 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
                                           IsSafetyCheck::kCriticalSafetyCheck),
                          check, *control);
 
-    Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
+    // Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
+    // Mask index to prevent access on speculation
+    index = insertIndexMask(index, length);
 
     Node* if_true = graph()->NewNode(common()->IfTrue(), branch);
     Node* etrue;
+    // Node* vtrue = etrue =
+        // graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
+                         // masked_index, *effect, if_true);
     Node* vtrue = etrue =
         graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         masked_index, *effect, if_true);
+                         index, *effect, if_true);
     vtrue = graph()->NewNode(simplified()->StringFromSingleCharCode(), vtrue);
 
     Node* if_false = graph()->NewNode(common()->IfFalse(), branch);
@@ -2717,12 +2740,17 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
         graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                          length, *effect, *control);
 
-    Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
+    // Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
+    // Mask index to prevent access on speculation
+    index = insertIndexMask(index, length);
 
     // Return the character from the {receiver} as single character string.
+    // Node* value = *effect =
+        // graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
+                         // masked_index, *effect, *control);
     Node* value = *effect =
         graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         masked_index, *effect, *control);
+                         index, *effect, *control);
     value = graph()->NewNode(simplified()->StringFromSingleCharCode(), value);
     return value;
   }
