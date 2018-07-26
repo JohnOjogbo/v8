@@ -2312,8 +2312,11 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
-      // Mask index to prevent access on speculation
-      index = insertIndexMask(index, length);
+      if (flags() & kLoadIndexMasking)
+      {
+        // Mask index to prevent access on speculation
+        index = insertIndexMask(index, length);
+      }
     }
 
     // Access the actual element.
@@ -2334,8 +2337,11 @@ JSNativeContextSpecialization::BuildElementAccess(
           Node* etrue = effect;
           Node* vtrue;
           {
-            // Mask index to prevent access on speculation
-            index = insertIndexMask(index, length);
+            if (flags() & kLoadIndexMasking)
+            {
+              // Mask index to prevent access on speculation
+              index = insertIndexMask(index, length);
+            }
             // Perform the actual load
             vtrue = etrue = graph()->NewNode(
                 simplified()->LoadTypedElement(external_array_type), buffer,
@@ -2467,8 +2473,11 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
-      // Mask index to prevent access on speculation
-      index = insertIndexMask(index, length);
+      if (flags() & kLoadIndexMasking)
+      {
+        // Mask index to prevent access on speculation
+        index = insertIndexMask(index, length);
+      }
     }
 
     // Compute the element access.
@@ -2513,8 +2522,11 @@ JSNativeContextSpecialization::BuildElementAccess(
         Node* etrue = effect;
         Node* vtrue;
         {
-          // Mask index to prevent access on speculation
-          index = insertIndexMask(index, length);
+          if (flags() & kLoadIndexMasking)
+          {
+            // Mask index to prevent access on speculation
+            index = insertIndexMask(index, length);
+          }
           // Perform the actual load
           vtrue = etrue =
               graph()->NewNode(simplified()->LoadElement(element_access),
@@ -2712,18 +2724,20 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
                                           IsSafetyCheck::kCriticalSafetyCheck),
                          check, *control);
 
-    // Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
-    // Mask index to prevent access on speculation
-    index = insertIndexMask(index, length);
+    Node *masked_index;
+    if (flags() & kLoadIndexMasking)
+    {
+      // Mask index to prevent access on speculation
+      masked_index = insertIndexMask(index, length);
+    }
+    else
+      masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
 
     Node* if_true = graph()->NewNode(common()->IfTrue(), branch);
     Node* etrue;
-    // Node* vtrue = etrue =
-        // graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         // masked_index, *effect, if_true);
     Node* vtrue = etrue =
         graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         index, *effect, if_true);
+                         masked_index, *effect, if_true);    
     vtrue = graph()->NewNode(simplified()->StringFromSingleCharCode(), vtrue);
 
     Node* if_false = graph()->NewNode(common()->IfFalse(), branch);
@@ -2740,17 +2754,19 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
         graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                          length, *effect, *control);
 
-    // Node* masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
-    // Mask index to prevent access on speculation
-    index = insertIndexMask(index, length);
+    Node *masked_index;
+    if (flags() & kLoadIndexMasking)
+    {
+      // Mask index to prevent access on speculation
+      masked_index = insertIndexMask(index, length);
+    }
+    else
+      masked_index = graph()->NewNode(simplified()->PoisonIndex(), index);
 
     // Return the character from the {receiver} as single character string.
-    // Node* value = *effect =
-        // graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         // masked_index, *effect, *control);
     Node* value = *effect =
         graph()->NewNode(simplified()->StringCharCodeAt(), receiver,
-                         index, *effect, *control);
+                         masked_index, *effect, *control);
     value = graph()->NewNode(simplified()->StringFromSingleCharCode(), value);
     return value;
   }

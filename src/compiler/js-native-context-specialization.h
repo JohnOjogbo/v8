@@ -42,7 +42,8 @@ class JSNativeContextSpecialization final : public AdvancedReducer {
   enum Flag {
     kNoFlags = 0u,
     kAccessorInliningEnabled = 1u << 0,
-    kBailoutOnUninitialized = 1u << 1
+    kBailoutOnUninitialized = 1u << 1,
+    kLoadIndexMasking = 1u << 2
   };
   typedef base::Flags<Flag> Flags;
 

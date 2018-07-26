@@ -504,6 +504,8 @@ DEFINE_BOOL(untrusted_code_mitigations, V8_DEFAULT_UNTRUSTED_CODE_MITIGATIONS,
             "Enable mitigations for executing untrusted code")
 #undef V8_DEFAULT_UNTRUSTED_CODE_MITIGATIONS
 
+DEFINE_BOOL(load_index_masking, false, "Mask array indices before loading.")
+
 DEFINE_BOOL(branch_load_poisoning, false, "Mask loads with branch conditions.")
 DEFINE_IMPLICATION(future, branch_load_poisoning)
 

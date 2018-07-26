@@ -1214,6 +1214,9 @@ struct InliningPhase {
     if (data->info()->is_bailout_on_uninitialized()) {
       flags |= JSNativeContextSpecialization::kBailoutOnUninitialized;
     }
+    if (FLAG_load_index_masking) {
+      flags |= JSNativeContextSpecialization::kLoadIndexMasking;
+    }
     JSNativeContextSpecialization native_context_specialization(
         &graph_reducer, data->jsgraph(), data->js_heap_broker(), flags,
         data->native_context(), data->dependencies(), temp_zone);
