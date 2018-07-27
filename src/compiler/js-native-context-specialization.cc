@@ -2312,7 +2312,7 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
-      if (flags() & kLoadIndexMasking)
+      if (FLAG_load_index_masking)
       {
         // Mask index to prevent access on speculation
         index = insertIndexMask(index, length);
@@ -2337,7 +2337,7 @@ JSNativeContextSpecialization::BuildElementAccess(
           Node* etrue = effect;
           Node* vtrue;
           {
-            if (flags() & kLoadIndexMasking)
+            if (FLAG_load_index_masking)
             {
               // Mask index to prevent access on speculation
               index = insertIndexMask(index, length);
@@ -2473,7 +2473,7 @@ JSNativeContextSpecialization::BuildElementAccess(
       index = effect =
           graph()->NewNode(simplified()->CheckBounds(VectorSlotPair()), index,
                            length, effect, control);
-      if (flags() & kLoadIndexMasking)
+      if (FLAG_load_index_masking)
       {
         // Mask index to prevent access on speculation
         index = insertIndexMask(index, length);
@@ -2522,7 +2522,7 @@ JSNativeContextSpecialization::BuildElementAccess(
         Node* etrue = effect;
         Node* vtrue;
         {
-          if (flags() & kLoadIndexMasking)
+          if (FLAG_load_index_masking)
           {
             // Mask index to prevent access on speculation
             index = insertIndexMask(index, length);
@@ -2725,7 +2725,7 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
                          check, *control);
 
     Node *masked_index;
-    if (flags() & kLoadIndexMasking)
+    if (FLAG_load_index_masking)
     {
       // Mask index to prevent access on speculation
       masked_index = insertIndexMask(index, length);
@@ -2755,7 +2755,7 @@ Node* JSNativeContextSpecialization::BuildIndexedStringLoad(
                          length, *effect, *control);
 
     Node *masked_index;
-    if (flags() & kLoadIndexMasking)
+    if (FLAG_load_index_masking)
     {
       // Mask index to prevent access on speculation
       masked_index = insertIndexMask(index, length);
